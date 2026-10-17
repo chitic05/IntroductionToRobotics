@@ -1,4 +1,4 @@
-#Exercitiul 1
+# Exercitiul 1
 
 Componente: -o baterie de 5V
 	    -N rezistori, N>=2
@@ -12,7 +12,7 @@ Calcule:
 	V sursa = V rezistori + V led
 	5V = 2*(78.8ohmi * 0.02A) + 1.8V <=> 5V = 4.952V ADEVARAT (aproximativ)
 
-#Exercitiul 2
+# Exercitiul 2
 
 Componente: -o baterie de 9V
 -2 rezistori( 1450ohmi, respectiv 357.5 ohmi)
@@ -31,7 +31,7 @@ Calcule:
 		Ochiul 1: V in = V rezistor1 + V LED1 <=> 9V = 7.25V (5mA*1450ohmi) + 1.75V = 9V ADEVARAT
 		Ochiul 2: V in = V rezistor2 + V LED2 <=> 9V = 7.15V (20mA * 357.5) + 1.85V = 9V ADEVARAT
 
-#Exercitiul 3
+# Exercitiul 3
 
 Componente: -o baterie de 12V
 	    -2 rezistori de 600 ohmi
