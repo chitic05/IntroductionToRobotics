@@ -1,4 +1,5 @@
 #Exercitiul 1
+
 Componente: -o baterie de 5V
 	    -N rezistori, N>=2
             -un LED rosu
@@ -11,6 +12,7 @@ Calcule:
 	5V = 2*(78.8ohmi * 0.02A) + 1.8V <=> 5V = 4.952V ADEVARAT (aproximativ)
 
 #Exercitiul 2
+
 Componente: -o baterie de 9V
 -2 rezistori( 1450ohmi, respectiv 357.5 ohmi)
 -2 LED-uri rosii
@@ -27,3 +29,31 @@ Calcule:
 	In fiecare ochi se respecta KVL:
 		Ochiul 1: V in = V rezistor1 + V LED1 <=> 9V = 7.25V (5mA*1450ohmi) + 1.75V = 9V ADEVARAT
 		Ochiul 2: V in = V rezistor2 + V LED2 <=> 9V = 7.15V (20mA * 357.5) + 1.85V = 9V ADEVARAT
+
+#Exercitiul 3
+
+Componente: -o baterie de 12V
+	    -2 rezistori de 600 ohmi
+	    -1 LED rosu
+	    -un buton
+	    -2 condensatori cu o capacitate de 5 uF
+
+Condensatori in serie:
+	-Capacitatea totala scade (1/Ctotala = 1/C1 + 1/C2)
+	-Sarcina electrica este egala in toti condensatorii
+	-Se incarca mai rapid decat cei pusi in paralel, dar se si descarca mult mai rapid
+	-C totala = (C1*C2)/(C1+C2) = 25/10 uF = 2.5 uF
+	-tau_incarcare = R * C_totala = 600 * 2.5 * 10^(-6) = 0.0015s
+	-t_incarcare_6V = -tau_incarcare * ln(1 - V_tinta/V_max) = -0.0015 * ln(0.5) = 0.001039s
+	-tau_descarcare = (R1 + R2) * C_totala = 1200 * 2.5 * 10^(-6) = 0.003s
+	-t_descarcare_de_la_6V_la_1.5V = -tau_descarcare * ln(V_tinta/V_curent) = -0.003 * ln(1.5V/6V) = 0.004158s
+
+Condensatori in paralel:
+	-Capacitatea totala creste (Ctotala = C1+C2)
+	-Sarcina electrica se aduna intre condensatori (Qtotala = Q1+Q2)
+	-Se incarca mai lent decat cei pusi in serie, dar se descarca mult mai lent
+	-C totala = 10uF
+	-tau_incarcare = R * C_totala = 600 * 10 * 10^(-6) = 0.006s
+	-t_incarcare_6V = -tau_incarcare * ln(1 - V_tinta/V_max) = -0.006 * ln(0.5) = 0.004158s
+	-tau_descarcare = (R1 + R2) * C_totala = 1200 * 10 * 10^(-6) = 0.012s
+	-t_descarcare_de_la_6V_la_1.5V = -tau_descarcare * ln(V_tinta/V_curent) = -0.012 * ln(1.5V/6V) = 0.01663s
