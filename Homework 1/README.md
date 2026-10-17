@@ -3,6 +3,7 @@
 Componente: -o baterie de 5V
 	    -N rezistori, N>=2
             -un LED rosu
+			
 Calcule: 
 	Am dorit sa obtin o intensitate de 20mA, asadar suma rezistentelor + rezistenta LED-ului trebuie sa fie 250ohmi. La 20mA LED-ul are o caderea de tensiune de 1.85V, deci rezistenta acestuia este de 92.5 ohmi.Alegem cele N rezistente astfel incat suma rezistentelor trebuie sa fie 157.5 ohmi (rezistentele sunt in serie). 
 	Caderea de tensiune a fiecarui rezistor este (Rezistenta acestuia) * (20mA) V. 
