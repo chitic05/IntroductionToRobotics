@@ -138,8 +138,8 @@ void loop(){
     ledcWriteTone(1, 0);
     digitalWrite(BPin, LOW);
     digitalWrite(GPin, HIGH);
-    digitalWrite(RPin, LOW);
-    operatingLevel = "MEDIUM (Green)";
+    digitalWrite(RPin, HIGH);
+    operatingLevel = "MEDIUM (Yellow)";
   }
 
   if (currentMillis - lastPrint >= printInterval) {

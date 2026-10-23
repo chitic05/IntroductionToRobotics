@@ -27,7 +27,7 @@ Toate componentele sunt conectate într-un singur circuit fix, rulând simultan.
 3. **RGB Status Indicator:** 
    LED-ul RGB își schimbă culoarea în funcție de intervalul în care se află potențiometrul:
    * **LOW (Albastru):** Treimea inferioară a intervalului ADC.
-   * **MEDIUM (Verde):** Treimea mijlocie a intervalului ADC.
+   * **MEDIUM (Galben):** Treimea mijlocie a intervalului ADC (obținut prin aprinderea simultană a pinilor Roșu și Verde).
    * **HIGH (Roșu):** Treimea superioară a intervalului ADC.
 
 4. **Sound Notifications:** 
@@ -41,16 +41,17 @@ Toate componentele sunt conectate într-un singur circuit fix, rulând simultan.
 
 ## Funcționalități Bonus Implementate
 
-* **Melodie de notificare non-blocking:** În locul unui singur ton de alertă, la intrarea în zona HIGH este redată o scurtă melodie formată din 4 note (262Hz, 330Hz, 392Hz, 523Hz), rulată asincron.
-* **Heartbeat Customizat:** LED-ul built-in nu execută un simplu blink, ci o secvență avansată de avertizare de funcționare (pachete de câte 3 blink-uri urmate de un cooldown logic).
+- **Melodie de notificare non-blocking:** În locul unui singur ton de alertă, la intrarea în zona HIGH este redată o scurtă melodie formată din 4 note (262Hz, 330Hz, 392Hz, 523Hz), rulată asincron.
+- **Heartbeat Customizat:** LED-ul built-in nu execută un simplu blink, ci o secvență avansată de avertizare de funcționare (pachete de câte 3 blink-uri urmate de un cooldown logic).
 
 ## Media și Demonstrație
 
 ### Schemă Circuit și Montaj Fizic
-*(Înlocuiți cu numele fișierelor voastre de imagine, de exemplu: schema.jpg și montaj.jpg)*
 ![Schema circuit](./img/schema.jpeg)
 ![Montaj asamblat](./img/montaj.jpeg)
 
 ### Video Demonstrație
 Puteți viziona demonstrația completă a circuitului accesând link-ul de mai jos:
 **https://youtu.be/TwHFxbFJ5SQ?is=crrc4eInEGL1LEV3**
+
+*(Notă: În clipul video atașat, starea de mijloc a LED-ului RGB apare configurată pe culoarea verde. Am modificat codul ulterior pentru a afișa corect culoarea galbenă, conform cerințelor, deoarece nu am fost atent la acest detaliu la momentul filmării).*
