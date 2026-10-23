@@ -48,8 +48,8 @@ Toate componentele sunt conectate într-un singur circuit fix, rulând simultan.
 
 ### Schemă Circuit și Montaj Fizic
 *(Înlocuiți cu numele fișierelor voastre de imagine, de exemplu: schema.jpg și montaj.jpg)*
-![Schema circuit](img/schema.jpg)
-![Montaj asamblat](img/montaj.jpg)
+![Schema circuit](./img/schema.jpg)
+![Montaj asamblat](./img/montaj.jpg)
 
 ### Video Demonstrație
 Puteți viziona demonstrația completă a circuitului accesând link-ul de mai jos:
