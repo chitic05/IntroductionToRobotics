@@ -1,4 +1,4 @@
-# Tema #4 - Smart Lamp Controller (Controler Inteligent pentru Lampă)
+# Tema #4 - Smart Lamp Controller
 
 ## Descrierea Proiectului
 
