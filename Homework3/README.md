@@ -49,7 +49,7 @@ Pentru a optimiza consumul de resurse, starea butonului nu este citită constant
 
 ### Schemă Circuit
 ![Montaj Circuit](./img/montaj.jpeg)
-![Schemă Circuit](./img/schema.jpg)
+![Schemă Circuit](./img/schema.jpeg)
 
 ### Demonstrație Video
 În videoclipul de mai jos este prezentat circuitul asamblat, demonstrând toate modurile lămpii, modul în care Heartbeat-ul continuă netulburat, precum și comportamentul distinct la apăsarea scurtă față de cea lungă.
