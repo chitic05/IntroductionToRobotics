@@ -12,11 +12,13 @@ enum Modes{
 };
 Modes lampMode = OFF;
 
-uint8_t history = 0xF; //ajuta la debouncing, 0xFF = notpressed, 0x00 = pressed
+uint8_t history = 0xFF; //ajuta la debouncing, 0xFF = notpressed, 0x00 = pressed
 bool pressed = false;
 long holdStart = 1;
 long holdEnd = 0;
 constexpr int holdTargetDuration = 1000;
+volatile bool checkButton= false;
+bool validating = false;
 
 constexpr int buttonReadDelay = 5;
 long lastButtonRead = 0;
@@ -34,6 +36,12 @@ constexpr int ledBlinkDuration = 500;
 long lastLedBlink;
 bool ledState = true;
 
+
+
+void IRAM_ATTR buttonInt(void){
+  checkButton = true;
+}
+
 void setup(){
   Serial.begin(9600);
   pinMode(BUTTON, INPUT_PULLUP);
@@ -42,6 +50,7 @@ void setup(){
   ledcSetup(0, 5000, 10);
   ledcAttachPin(LED, 0);
   ledcWrite(0, 0);
+  attachInterrupt(digitalPinToInterrupt(BUTTON), buttonInt, FALLING);
 }
 
 void loop(){
@@ -68,26 +77,37 @@ void loop(){
     }
   }
 
-  if(currentTime - lastButtonRead >= buttonReadDelay){
-    lastButtonRead = currentTime;
-    history = (history << 1) | digitalRead(BUTTON);
-    if(history == 0x0 && !pressed){
-      pressed = true;
-      holdStart = currentTime;
-    }
-
-    if(history == 0xF && pressed){
-      pressed = false;
-      unsigned long holdDuration = currentTime - holdStart;
-      if(holdDuration >= holdTargetDuration){
-        lampMode = OFF;
-      } else {
-        if(lampMode == BLINK) lampMode = OFF;
-        else lampMode = (Modes)((int)lampMode + 1);
-      }
-    }
-
+  if(checkButton && !validating){
+    validating = true;
+    checkButton = false;
+    history = 0xFF;
   }
+
+  if(validating){
+    if(currentTime - lastButtonRead >= buttonReadDelay){
+
+      lastButtonRead = currentTime;
+      history = (history << 1) | digitalRead(BUTTON);
+      if(history == 0x0 && !pressed){
+        pressed = true;
+        holdStart = currentTime;
+      }
+
+      if(history == 0xFF && pressed){
+        pressed = false;
+        validating = false;
+        unsigned long holdDuration = currentTime - holdStart;
+        if(holdDuration >= holdTargetDuration){
+          lampMode = OFF;
+        } else {
+          if(lampMode == BLINK) lampMode = OFF;
+          else lampMode = (Modes)((int)lampMode + 1);
+        }
+      }
+      
+    }
+  }
+  
   
   switch(lampMode){
     case OFF:
