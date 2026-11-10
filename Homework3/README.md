@@ -1,57 +1,57 @@
-# Tema #4 - Smart Lamp Controller
+# Homework 3 - Fan Control and Status Panel
 
-## Descrierea Proiectului
+Acest proiect simulează un panou de control și status pentru un sistem de ventilație, folosind un microcontroler ESP32. Implementarea combină intrări analogice, semnale PWM, controlul LED-urilor (inclusiv RGB) și notificări sonore asincrone (fără funcția `delay()`).
 
-Acest proiect implementează un **Controler Inteligent pentru Lampă** folosind un microcontroler ESP32. Scopul principal este crearea unei interfețe hardware robuste, controlată printr-un singur buton de tip push. Sistemul este capabil să facă distincția între apăsările scurte și cele lungi, gestionând simultan un sistem de debouncing software și temporizări asincrone pentru a asigura o execuție non-blocantă a codului.
+## Hardware și Conexiuni
 
-Proiectul acoperă concepte esențiale din robotică și sisteme embedded: întreruperi hardware (ISR), mașini de stări (State Machines), debouncing prin regiștri de deplasare (Shift Registers) și controlul luminozității prin semnale PWM (Pulse Width Modulation).
+Toate componentele sunt conectate într-un singur circuit fix, rulând simultan. Potențiometrul este alimentat la **3.3V**.
 
-## Componente Hardware și Conexiuni
+| Componentă | Rol | Pin ESP32 |
+| :--- | :--- | :--- |
+| **Built-in LED** | System Heartbeat (indicator funcționare) | `GPIO 2` |
+| **LED Extern** | Simulator viteză ventilator (Fan output) | `GPIO 18` |
+| **Potențiometru** | Reglarea vitezei (Speed control) | `GPIO 34` |
+| **LED RGB (R)** | Status viteză - Treimea superioară | `GPIO 27` |
+| **LED RGB (G)** | Status viteză - Treimea mijlocie | `GPIO 26` |
+| **LED RGB (B)** | Status viteză - Treimea inferioară | `GPIO 25` |
+| **Buzzer pasiv** | Notificări sonore | `GPIO 23` |
 
-Sistemul rulează pe un singur circuit fix, iar atribuirea pinilor a fost realizată conform specificațiilor laboratorului:
+## Implementare și Cerințe Rezolvate
 
-| Componentă | Rol în Sistem | Pin ESP32 | Mod / Configurare |
-| :--- | :--- | :--- | :--- |
-| **Buton Push** | Comandă sistem, schimbare stări | `GPIO 23` | `INPUT_PULLUP`, Întrerupere `FALLING` |
-| **LED Extern** | Lampa principală (controlată prin PWM) | `GPIO 22` | Output PWM (Canal 0, 5000Hz, 10-bit) |
-| **Built-in LED** | Indicator *Heartbeat* (rulează asincron) | `GPIO 2` | Digital Output |
+1. **System Heartbeat:** 
+   LED-ul integrat semnalează funcționarea sistemului printr-un tipar asincron (folosind `millis()`): clipește de 3 ori (interval de 250ms), urmat de o pauză de 2 secunde. Funcționează independent de celelalte componente.
 
-*Notă: LED-ul extern necesită un rezistor de limitare a curentului adecvat pentru a preveni arderea componentei sau suprasolicitarea pinului.*
+2. **Fan Speed Control:** 
+   ESP32 citește valoarea potențiometrului (0 - 4095) și o mapează la un interval PWM cu o rezoluție de 10-biți (0 - 1023) și o frecvență de 5000Hz. Frecvența și rezoluția ridicată ajută la obținerea unui output mult mai precis în raport cu citirea potențiometrului și elimină efectul de flickering al LED-ului. Astfel, luminozitatea LED-ului extern crește fin și proporțional cu valoarea citită.
 
-## Cerințe Implementate
+3. **RGB Status Indicator:** 
+   LED-ul RGB își schimbă culoarea în funcție de intervalul în care se află potențiometrul:
+   * **LOW (Albastru):** Treimea inferioară a intervalului ADC.
+   * **MEDIUM (Galben):** Treimea mijlocie a intervalului ADC (obținut prin aprinderea simultană a pinilor Roșu și Verde).
+   * **HIGH (Roșu):** Treimea superioară a intervalului ADC.
 
-Proiectul îndeplinește toate cele 4 cerințe obligatorii (checkpoints) descrise în documentație:
+4. **Sound Notifications:** 
+   Când potențiometrul intră în treimea superioară (zona Roșie), se declanșează o notificare sonoră pe buzzer. Sistemul reține starea pentru a nu repeta sunetul cât timp valoarea rămâne în acest interval (trigger doar la tranziția de stare).
 
-### 1. Moduri de Funcționare (Operating Modes)
-Sistemul utilizează o structură de tip `enum` pentru a defini o mașină de stări cu 4 moduri distincte:
-* **OFF ($0$):** Lampa este complet stinsă (PWM setat la $0$).
-* **DIM ($1$):** Lampa este aprinsă la intensitate redusă (valoare PWM de $250$ dintr-un maxim de $4095$).
-* **FULL ($2$):** Lampa luminează la capacitate maximă (valoare PWM de $4095$).
-* **BLINK ($3$):** Lampa clipește intermitent la un interval de $500\text{ ms}$.
+5. **Non-blocking Implementation:** 
+   Codul nu conține funcția `delay()`. Toate temporizările (clipirea LED-ului heartbeat, redarea notelor pe buzzer) sunt implementate asincron folosind `millis()`.
 
-### 2. Operații Independente (Independent Operations)
-Pentru a evita blocarea microcontrolerului, codul renunță complet la funcția `delay()`. Toate temporizările sunt realizate folosind `millis()`:
-* **Heartbeat-ul sistemului:** LED-ul integrat (`GPIO 2`) clipește de două ori, urmat de o pauză de $1000\text{ ms}$, demonstrând că bucla principală rulează continuu și fără întreruperi.
-* **Blink-ul lămpii:** Alternarea stării lămpii în modul `BLINK` este gestionată tot prin diferențe de timp asincrone.
+6. **Serial Debugging:** 
+   La fiecare 500ms, sistemul afișează în Serial Monitor (Baud rate: 9600) următoarele date: valoarea raw ADC, valoarea PWM aplicată și nivelul de operare curent (LOW/MEDIUM/HIGH).
 
-### 3. Gestionarea Apăsărilor Scurte și Lungi (Short and Long Presses)
-* **Apăsare Scurtă:** La fiecare apăsare scurtă validată, lampa trece ciclic prin modurile definite: `OFF` $\rightarrow$ `DIM` $\rightarrow$ `FULL` $\rightarrow$ `BLINK` $\rightarrow$ `OFF`.
-* **Apăsare Lungă:** Dacă butonul este menținut apăsat pentru o durată de cel puțin $1000\text{ ms}$ (definită prin `holdTargetDuration`), lampa trece automat în modul `OFF`, indiferent de starea anterioară.
+## Funcționalități Bonus Implementate
 
-### 4. Tratarea Butonului folosind Întreruperi (Interrupt-Assisted Button Handling)
-Pentru a optimiza consumul de resurse, starea butonului nu este citită constant (polling continuu).
-* Am atașat o întrerupere pe front descendent (`FALLING`) pe pinul butonului. Când butonul este apăsat (semnalul trece din `HIGH` în `LOW`), se apelează rutina de tratare a întreruperii (ISR - `buttonInt`), care doar setează un *flag* (`checkButton = true`).
-* În bucla principală, detectarea flag-ului declanșează procesul de validare (Debouncing).
-* **Debouncing simetric pe 8 biți:** Validarea se face printr-un registru de deplasare (`uint8_t history = 0xFF`), eșantionat la fiecare $5\text{ ms}$. O apăsare este validată doar când variabila devine `0x00` (8 citiri consecutive de `LOW`), iar o eliberare este recunoscută doar când revine la `0xFF` (8 citiri consecutive de `HIGH`). Astfel, filtrarea contactelor imperfecte este impecabilă.
+- **Melodie de notificare non-blocking:** În locul unui singur ton de alertă, la intrarea în zona HIGH este redată o scurtă melodie formată din 4 note (262Hz, 330Hz, 392Hz, 523Hz), rulată asincron.
+- **Heartbeat Customizat:** LED-ul built-in nu execută un simplu blink, ci o secvență avansată de avertizare de funcționare (pachete de câte 3 blink-uri urmate de un cooldown logic).
 
+## Media și Demonstrație
 
-## Materiale Suplimentare
+### Schemă Circuit și Montaj Fizic
+![Schema circuit](./img/schema.jpeg)
+![Montaj asamblat](./img/montaj.jpeg)
 
-### Schemă Circuit
-![Montaj Circuit](./img/montaj.jpeg)
-![Schemă Circuit](./img/schema.jpeg)
+### Video Demonstrație
+Puteți viziona demonstrația completă a circuitului accesând link-ul de mai jos:
+**https://youtu.be/TwHFxbFJ5SQ?is=crrc4eInEGL1LEV3**
 
-### Demonstrație Video
-În videoclipul de mai jos este prezentat circuitul asamblat, demonstrând toate modurile lămpii, modul în care Heartbeat-ul continuă netulburat, precum și comportamentul distinct la apăsarea scurtă față de cea lungă.
-
-[**Urmăriți Demonstrația Video pe YouTube**](https://youtu.be/_oXuvhJiMrE?is=L0dtnDDYudmZvkVq)
+*(Notă: În clipul video atașat, starea de mijloc a LED-ului RGB apare configurată pe culoarea verde. Am modificat codul ulterior pentru a afișa corect culoarea galbenă, conform cerințelor, deoarece nu am fost atent la acest detaliu la momentul filmării).*
