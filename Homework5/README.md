@@ -20,7 +20,7 @@ Sistemul utilizează un circuit fix, iar atribuirea pinilor respectă specifica�
 | **Joystick Y-axis (VRy)** | Citire poziție verticală / pornire/reset | `GPIO 35` | ADC Channel 7 |
 | **Joystick Button (SW)** | Oprire contor (Stop) | `GPIO 32` | Input / Buton cu Pull-up |
 
-*Notă: Registrul 74HC595 și joystick-ul sunt alimentate la $3.3\text{V}$, iar segmentele display-ului utilizează rezistoare de limitare a curentului de $1\text{220}\Omega$.*
+*Notă: Registrul 74HC595 și joystick-ul sunt alimentate la 3.3V, iar segmentele display-ului utilizează rezistoare de limitare a curentului de 220ohm.*
 
 ## Cerințe Implementate
 
