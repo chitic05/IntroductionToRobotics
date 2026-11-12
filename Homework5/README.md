@@ -53,9 +53,10 @@ Codul folosește exclusiv temporizări asincrone bazate pe `esp_timer_get_time()
 ## Materiale Suplimentare
 
 ### Schemă Circuit și Montaj
-*(Adăugați imaginile sau schițele montajului hardware aici, conform modelului anterior)*
+![Schema circuit](./img/schema.jpeg)
+![Montaj asamblat](./img/montaj.jpeg)
 
 ### Demonstrație Video
 În videoclipul de mai jos este prezentat circuitul complet și o rundă demonstrativă de joc (pornire, numărătoare, oprire cu calculul erorii și resetare).
 
-[**Urmăriți Demonstrația Video pe YouTube**](https://youtu.be/_oXuvhJiMrE)
+[**Urmăriți Demonstrația Video pe YouTube**](https://www.youtube.com/watch?v=A7RAHS90SE0)
