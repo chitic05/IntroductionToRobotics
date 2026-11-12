@@ -1,5 +1,2 @@
-.pio
+.pio/
 .vscode/
-build/
-lib/
-test/
