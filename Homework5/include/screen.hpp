@@ -1,7 +1,7 @@
 #pragma once
-#include <algorithm>
 #include "driver/gpio.h"
 #include "ShiftRegister.hpp"
+#include <atomic>
 
 constexpr int puteri10[] = { 1, 10, 100, 1000 };
 
@@ -10,7 +10,7 @@ class Screen {
         ShiftRegister sr;
         gpio_num_t digitPins[4];
         uint8_t currentDigit = 0;
-        volatile int currentVal; 
+        std::atomic<int> currentVal; 
     public:
         explicit Screen(gpio_num_t DS, gpio_num_t SH, gpio_num_t ST, const gpio_num_t digits[4])
             : sr(DS, SH, ST, 1), currentVal(0) {
@@ -39,8 +39,9 @@ class Screen {
             int prevDigit = (currentDigit == 0) ? 3 : currentDigit - 1;
             gpio_set_level(digitPins[prevDigit], 1); 
 
-            int digitVal = (currentVal / puteri10[currentDigit]) % 10;
-            if(digitVal == 0 && currentVal < puteri10[currentDigit] && currentDigit != 0) sr.writeValue(0x00);
+            int val = currentVal.load();
+            int digitVal = (val / puteri10[currentDigit]) % 10;
+            if(digitVal == 0 && val < puteri10[currentDigit] && currentDigit != 0) sr.writeValue(0x00);
             else sr.writeValue(ShiftRegister::number[digitVal]);
             
             gpio_set_level(digitPins[currentDigit], 0);
@@ -49,7 +50,7 @@ class Screen {
         }
 
         void changeValue(int val) {
-            currentVal = val;
+            currentVal.store(val);
         }
 
         Screen(const Screen&) = delete;

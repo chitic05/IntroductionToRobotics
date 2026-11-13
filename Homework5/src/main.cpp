@@ -74,15 +74,15 @@ extern "C" void app_main(void) {
                 
                 uint64_t elapsed_ms = (now - lastUpdateTime) / 1000;
                 
-                if (elapsed_ms > 0) {
-                    currentValue -= elapsed_ms;
+               
+                    currentValue --;
                     if(currentValue < 0) currentValue = 0; 
                     
                     screen.changeValue(currentValue);
                     
                    
                     lastUpdateTime += (elapsed_ms * 1000);
-                }
+                
                 
                 if(data.buttonPressed || currentValue == 0){
                     state = END;
@@ -100,7 +100,7 @@ extern "C" void app_main(void) {
             }
 
 
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
     vTaskDelete(nullptr);
     
