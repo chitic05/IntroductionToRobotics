@@ -15,6 +15,24 @@
 #define BUTTON_3 GPIO_NUM_36
 #define LED_3 GPIO_NUM_23
 
+#define LED_ELEVATOR GPIO_NUM_17
+
+enum ElevatorStates{
+    IDLE,
+    CLOSING_DOORS,
+    MOVING,
+    OPENING_DOORS
+};
+
+struct Elevator{
+    ElevatorStates state = IDLE;
+    uint8_t currentFloor = 0;
+    uint8_t targetFloor = 4;
+    int8_t direction = 1;
+    //1 = up -1 = down
+    bool ledState = false;
+};
+
 struct Button {
     gpio_num_t pin, led;
     uint8_t history = 0xFF;
@@ -48,13 +66,36 @@ void init_pins() {
     gpio_config_t leds_cfg = {
         .pin_bit_mask = (1ULL << LED_1) | // led_button 1
                         (1ULL << LED_2) | // led_button 2
-                        (1ULL << LED_3),  // led_button 3
+                        (1ULL << LED_3) |  // led_button 3
+                        (1ULL << LED_ELEVATOR),
         .mode = GPIO_MODE_OUTPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
         .intr_type = GPIO_INTR_DISABLE
     };
     gpio_config(&leds_cfg);
+}
+
+void findNextFloor(Elevator& e, Button* b){
+    if(e.direction == 1){
+        for(int i = e.currentFloor; i<3;i++){
+            if(b[i].inQueue){
+                e.targetFloor = i;
+                return;
+            }
+        }
+        e.direction = -1;
+    }
+    if(e.direction == -1){
+        for(int i  = e.currentFloor; i>=0;i--){
+            if(b[i].inQueue){
+                e.targetFloor = i;
+                return;
+            } 
+        }
+        e.direction = 1;
+    }
+    e.targetFloor = e.currentFloor;
 }
 
 void inputTimerCb(void* param) {
@@ -75,29 +116,16 @@ void inputTimerCb(void* param) {
     }
 }
 
-void playSoundTask(void* param) {
-    Sound s;
-    QueueHandle_t queueHandle = static_cast<QueueHandle_t>(param);
-    while (1) {
-        if (xQueueReceive(queueHandle, &s, portMAX_DELAY) == pdPASS) {
-            // TODO: Start PWM/LEDc tone with s.freq
-            vTaskDelay(pdMS_TO_TICKS(s.duration));
-            // TODO: Stop tone
-        }
-    }
+void elevatorLedBlinkCb(void* param){
+    bool* ledState = (bool*) param;
+    gpio_set_level(LED_ELEVATOR, *ledState);
+    *ledState = !(*ledState);
 }
 
 extern "C" void app_main(void) {
     init_pins();
 
     static ShiftRegister screen_sh(GPIO_NUM_19, GPIO_NUM_5, GPIO_NUM_18);
-    screen_sh.writeValue(ShiftRegister::number[8]);
-
-    QueueHandle_t soundQueueHandle = xQueueCreate(5, sizeof(Sound));
-    TaskHandle_t playSoundHandler = NULL;
-    if (xTaskCreate(playSoundTask, "playSound", 2048, (void*)soundQueueHandle, 2, &playSoundHandler) != pdPASS) {
-        ESP_LOGE("main", "Couldn't create the play sound task!");
-    }
 
     // Initialize buttons with their specific pins
     static Button buttons[3] = {
@@ -111,7 +139,6 @@ extern "C" void app_main(void) {
         .buttons = buttons,
         .inputSemaphore = inputSemaphore
     };
-
     esp_timer_create_args_t inputTimerArgs = {
         .callback = inputTimerCb,
         .arg = &args,
@@ -119,20 +146,87 @@ extern "C" void app_main(void) {
         .name = "input",
         .skip_unhandled_events = true
     };
-
     esp_timer_handle_t inputTimerHandle = nullptr;
     ESP_ERROR_CHECK(esp_timer_create(&inputTimerArgs, &inputTimerHandle));
     ESP_ERROR_CHECK(esp_timer_start_periodic(inputTimerHandle, 3000)); // 3ms debounce tick
 
-    bool lastState[3] = {false, false, false};
+    
+    static Elevator elevator;
+
+    esp_timer_create_args_t blinkTimerArgs = {
+        .callback = elevatorLedBlinkCb,
+        .arg = &elevator.ledState,
+        .dispatch_method = ESP_TIMER_TASK,
+        .name = "blink",
+        .skip_unhandled_events = true
+    };
+    esp_timer_handle_t blinkHandle = nullptr;
+    ESP_ERROR_CHECK(esp_timer_create(&blinkTimerArgs, &blinkHandle));
+
+    screen_sh.writeValue(ShiftRegister::number[elevator.currentFloor]);
     while (1) {
-        if (xSemaphoreTake(inputSemaphore, pdMS_TO_TICKS(10)) == pdPASS) {
-            for (int i = 0; i < 3; ++i) {
-                if(buttons[i].inQueue == true && lastState[i] == false)
-                    lastState[i] = true;
+        switch(elevator.state){
+            case IDLE:{
+                if (xSemaphoreTake(inputSemaphore, pdMS_TO_TICKS(10)) == pdPASS) {
+                    findNextFloor(elevator, buttons);
+                    if (elevator.targetFloor != elevator.currentFloor) {
+                        elevator.state = CLOSING_DOORS;
+                    } else if (buttons[elevator.currentFloor].inQueue) {
+                        elevator.state = OPENING_DOORS; // Re-open doors & clear LED if called at current floor
+                    }
+                    xSemaphoreGive(inputSemaphore);
+                }
+                break;
             }
-            xSemaphoreGive(inputSemaphore);
+            case CLOSING_DOORS:{
+
+                
+                //play sound for closing
+                vTaskDelay(pdMS_TO_TICKS(3000)); // 3 secunde sa se inchida usile
+
+                
+                //stop sound
+                elevator.state = MOVING;
+                elevator.ledState = 1;
+                ESP_ERROR_CHECK(esp_timer_start_periodic(blinkHandle, 2000*100)); //200ms on/off
+                break;
+            }
+            case MOVING:{
+                bool shouldStop = false;
+                if (xSemaphoreTake(inputSemaphore, pdMS_TO_TICKS(10)) == pdPASS){ // pentru a evita blocarea semaforului
+                    shouldStop = buttons[elevator.currentFloor].inQueue;
+                    xSemaphoreGive(inputSemaphore);
+                }
+
+                if (shouldStop){
+                    elevator.state = OPENING_DOORS;
+                    ESP_ERROR_CHECK(esp_timer_stop(blinkHandle));
+                    elevator.ledState = 0;
+                    ESP_ERROR_CHECK(gpio_set_level(LED_ELEVATOR, elevator.ledState));
+                }else if(elevator.currentFloor != elevator.targetFloor){
+                    vTaskDelay(pdMS_TO_TICKS(1000)); // 1 secunda intre etaje
+                    elevator.currentFloor += elevator.direction;
+                    screen_sh.writeValue(ShiftRegister::number[elevator.currentFloor]);
+                }
+                break;
+            }
+            case OPENING_DOORS:{
+                if(xSemaphoreTake(inputSemaphore, 1) == pdTRUE){
+                    ESP_ERROR_CHECK( gpio_set_level(buttons[elevator.currentFloor].led, 0));
+                    buttons[elevator.currentFloor].inQueue = false; // am ajuns la etajul respectiv
+
+                    //play sound for arriving
+                    xSemaphoreGive(inputSemaphore);
+
+                    vTaskDelay(pdMS_TO_TICKS(3000)); // 3 secunde sa se deschida 
+                    elevator.state = IDLE;
+                }
+               
+                break; 
+            }
         }
+
+
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
