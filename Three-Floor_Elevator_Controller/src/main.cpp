@@ -194,7 +194,9 @@ extern "C" void app_main(void) {
                 if(elevator.targetFloor != elevator.currentFloor){
                     ESP_LOGI(TAG, "Comanda primita -> Destinatie: etajul %d (Directie: %s)", 
                              elevator.targetFloor, elevator.direction == 1 ? "SUS" : "JOS");
-                    elevator.state = CLOSING_DOORS;
+                    elevator.state = MOVING;
+                    elevator.ledState.store(true);
+                    elevator.isMoving.store(true);
                 } else if (buttons[elevator.currentFloor].inQueue.load()) {
                     ESP_LOGI(TAG, "Liftul este deja la etajul %d -> Se redeschid usile", elevator.currentFloor);
                     elevator.state = OPENING_DOORS;
@@ -208,18 +210,8 @@ extern "C" void app_main(void) {
                 vTaskDelay(pdMS_TO_TICKS(2000));
                 ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0, 0);
 
-                // Verifică dacă s-a apăsat un etaj nou cât timp ușile s-au deschis/închis
-                findNextFloor(elevator, buttons);
-                
-                if (elevator.currentFloor != elevator.targetFloor) {
-                    ESP_LOGI(TAG, "Usile s-au inchis. Liftul porneste spre etajul %d...", elevator.targetFloor);
-                    elevator.state = MOVING;
-                    elevator.ledState.store(true);
-                    elevator.isMoving.store(true);
-                } else {
-                    ESP_LOGI(TAG, "Usile s-au inchis. Liftul intra in IDLE");
-                    elevator.state = IDLE;
-                }
+                ESP_LOGI(TAG, "Usile s-au inchis. Liftul intra in IDLE");
+                elevator.state = IDLE;
                 break;
             }
             case MOVING: {
